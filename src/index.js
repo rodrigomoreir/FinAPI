@@ -8,6 +8,24 @@ app.use(express.json())
 
 const customers = []
 
+// Middleware
+function verifyIfExistsAccountCPG(request, response, next) {
+    // O terceiro parametro, o next, é quem define se o middleware continuar a operação ou para por ali
+    const { cpf } = request.headers
+
+    // find() retorna o objeto/dados achados
+    const customer = customers.find(customer => customer.cpf === cpf)
+
+    if (!customer) {
+        return response.status(400).json({ error: "Customer not found" })
+    }
+
+    // Notação para passar um dado do middleware a seguir
+    request.customer = customer
+
+    return next()
+}
+
 app.post("/account", (request, response) => {
     const { cpf, name } = request.body
 
@@ -29,13 +47,33 @@ app.post("/account", (request, response) => {
     return response.status(201).send()
 })
 
-app.get("/statement/:cpf", (request, response) => {
-    const { cpf } = request.params
+// Uma das formas de se usar o middleware, nesse caso, utiliza-se assim quando 
+// quero que todas as rotas a seguir utilizem esse middleware, mas se for em apenas
+// uma rota, usa-se como parametro entre a rota e o requestResponse.
+// app.use(verifyIfExistsAccountCPG)
 
-    // find() retorna o objeto/dados achados
-    const customer = customers.find(customer => customer.cpf === cpf)
+app.get("/statement", verifyIfExistsAccountCPG, (request, response) => {
+    // recuperando o dado passado no middleware
+    const { customer } = request
 
     return response.json(customer.statement)
+})
+
+app.post("/deposit", verifyIfExistsAccountCPG, (request, response) => {
+    const { description, amount } = request.body
+
+    const { customer } = request
+
+    const statementOperation = {
+        description,
+        amount,
+        created_at: new Date(),
+        type: "credit"
+    }
+
+    customer.statement.push(statementOperation)
+
+    return response.status(201).send()
 })
 
 // starta a aplicação
