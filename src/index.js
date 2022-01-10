@@ -26,6 +26,21 @@ function verifyIfExistsAccountCPG(request, response, next) {
     return next()
 }
 
+function getBalance(statement) {
+    // reduce() transforma todos os valores passados para ele em um unico valor
+    // ela recebe dois parametros, um acumulador e o objeto que queremos
+    const balance = statement.reduce((acc, operation) => {
+        if (operation.type === 'credit') {
+            return acc + operation.amount
+        } else {
+            return add - operation.amount
+        }
+    }, 0)
+    // o zero é o valor inicial do reduce
+
+    return balance
+}
+
 app.post("/account", (request, response) => {
     const { cpf, name } = request.body
 
@@ -69,6 +84,27 @@ app.post("/deposit", verifyIfExistsAccountCPG, (request, response) => {
         amount,
         created_at: new Date(),
         type: "credit"
+    }
+
+    customer.statement.push(statementOperation)
+
+    return response.status(201).send()
+})
+
+app.post("/withdraw", verifyIfExistsAccountCPG, (request, response) => {
+    const { amount } = request.body
+    const { customer } = request
+
+    const balance = getBalance(customer.statement)
+
+    if (balance < amount) {
+        return response.status(400).json({ error: "Insufficient funds!" })
+    }
+
+    const statementOperation = {
+        amount,
+        created_at: new Date(),
+        type: "debit"
     }
 
     customer.statement.push(statementOperation)
