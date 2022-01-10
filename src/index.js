@@ -124,5 +124,20 @@ app.get("/statement/date", verifyIfExistsAccountCPG, (request, response) => {
     return response.json(statement)
 })
 
+app.put("/account", verifyIfExistsAccountCPG, (request, response) => {
+    const { name } = request.body
+    const { customer } = request
+
+    customer.name = name
+
+    return response.status(201).send()
+})
+
+app.get("/account", verifyIfExistsAccountCPG, (request, response) => {
+    const { customer } = request
+
+    return response.json(customer)
+})
+
 // starta a aplicação
 app.listen(3333) 
