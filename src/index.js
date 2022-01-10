@@ -33,7 +33,7 @@ function getBalance(statement) {
         if (operation.type === 'credit') {
             return acc + operation.amount
         } else {
-            return add - operation.amount
+            return acc - operation.amount
         }
     }, 0)
     // o zero é o valor inicial do reduce
@@ -137,6 +137,24 @@ app.get("/account", verifyIfExistsAccountCPG, (request, response) => {
     const { customer } = request
 
     return response.json(customer)
+})
+
+app.delete("/account", verifyIfExistsAccountCPG, (request, response) => {
+    const { customer } = request
+
+    // splice é uma das formas de remover algo de um array, splice recebe 2 parametros
+    // o primeiro é onde começa, e o segundo é até onde deve remover, nesse caso so ele, então 1
+    customers.splice(customer, 1)
+
+    return response.status(200).json(customers)
+})
+
+app.get("/balance", verifyIfExistsAccountCPG, (request, response) => {
+    const { customer } = request
+
+    const balance = getBalance(customer.statement)
+
+    return response.json(balance)
 })
 
 // starta a aplicação
